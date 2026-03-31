@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bio-Scout DK | Alpha</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #1A1D21; color: #F0F0F0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .neon-border { border: 1px solid #00E5FF; box-shadow: 0 0 15px rgba(0, 229, 255, 0.3); }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .scanner-active { animation: scan 2s infinite; }
+        @keyframes scan { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+    </style>
+</head>
+<body class="p-4 pb-24">
+
+    <header class="flex justify-between items-center mb-10 pt-4">
+        <div>
+            <h1 class="text-2xl font-black tracking-tighter text-[#00E5FF]">BIO-SCOUT</h1>
+            <p class="text-[10px] tracking-[0.2em] text-gray-500 uppercase">Denmark Division</p>
+        </div>
+        <div class="w-12 h-12 rounded-full border border-gray-700 flex items-center justify-center bg-gray-800">👤</div>
+    </header>
+
+    <section class="mb-10">
+        <h2 class="text-[10px] uppercase tracking-[0.3em] text-gray-500 mb-4 font-bold">Active Missions</h2>
+        <div class="glass p-5 rounded-2xl border-l-4 border-l-[#00E5FF]">
+            <div class="flex justify-between items-start mb-2">
+                <p class="font-bold text-lg">Spring Sentinel</p>
+                <span class="text-[10px] bg-[#00E5FF]/20 text-[#00E5FF] px-2 py-1 rounded">500 XP</span>
+            </div>
+            <p class="text-sm text-gray-400 leading-relaxed">Find and identify the first **Brimstone Butterfly** (Citronsommerfugl) in your area.</p>
+            <div class="w-full bg-gray-900 h-1.5 mt-4 rounded-full overflow-hidden">
+                <div class="bg-[#00E5FF] h-full shadow-[0_0_10px_#00E5FF]" style="width: 35%"></div>
+            </div>
+        </div>
+    </section>
+
+    <div id="camera-container" class="hidden fixed inset-0 z-50 bg-black flex flex-col">
+        <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
+        <div class="absolute inset-0 border-[2px] border-[#00E5FF]/30 m-12 pointer-events-none scanner-active"></div>
+        <button id="close-camera" class="absolute top-10 right-6 text-white text-4xl">&times;</button>
+        <button id="capture-photo" class="absolute bottom-12 left-1/2 -translate-x-1/2 w-20 h-20 rounded-full border-4 border-white bg-[#00E5FF]/20 shadow-2xl"></button>
+    </section>
+
+    <section>
+        <h2 class="text-[10px] uppercase tracking-[0.3em] text-gray-500 mb-4 font-bold">Recent Discoveries</h2>
+        <div class="space-y-4">
+            <div class="relative rounded-2xl overflow-hidden h-56 bg-gray-800 group border border-gray-700">
+                <img src="https://images.unsplash.com/photo-1550686041-366ad85a1355?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700">
+                <div class="absolute bottom-0 left-0 right-0 p-4 glass">
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <p class="text-[10px] text-[#00E5FF] font-bold tracking-widest uppercase">Ancient Beech Forest</p>
+                            <p class="text-sm font-bold">Rold Skov, Nordjylland</p>
+                        </div>
+                        <span class="text-xs text-gray-400">2m ago</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <nav class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[85%] max-w-md glass rounded-3xl py-4 px-10 flex justify-between items-center border border-white/10 shadow-2xl">
+        <button class="text-gray-500 hover:text-[#00E5FF] transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </button>
+        <button id="open-camera" class="bg-[#00E5FF] p-4 rounded-2xl shadow-[0_0_20px_rgba(0,229,255,0.5)] -mt-12 transform active:scale-95 transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+        </button>
+        <button class="text-gray-500 hover:text-[#00E5FF] transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+        </button>
+    </nav>
+
+    <script>
+        const openBtn = document.getElementById('open-camera');
+        const closeBtn = document.getElementById('close-camera');
+        const cameraContainer = document.getElementById('camera-container');
+        const video = document.getElementById('webcam');
+
+        openBtn.onclick = async () => {
+            cameraContainer.classList.remove('hidden');
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            video.srcObject = stream;
+        };
+
+        closeBtn.onclick = () => {
+            const stream = video.srcObject;
+            const tracks = stream.getTracks();
+            tracks.forEach(track => track.stop());
+            cameraContainer.classList.add('hidden');
+        };
+    </script>
+</body>
+</html>
