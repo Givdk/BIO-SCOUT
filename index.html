@@ -3,28 +3,323 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bio-Scout Test</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Bio-Scout DK</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .neon-text { text-shadow: 0 0 10px #00E5FF, 0 0 20px #00E5FF; }
+        video { object-fit: cover; }
+        .tab-active { color: #00E5FF; border-top: 2px solid #00E5FF; }
+
+        @keyframes pulse-neon {
+            0%, 100% { box-shadow: 0 0 30px #00E5FF, 0 0 60px rgba(0,229,255,0.3); }
+            50%       { box-shadow: 0 0 50px #00E5FF, 0 0 100px rgba(0,229,255,0.5); }
+        }
+        .pulse-neon { animation: pulse-neon 2s infinite; }
+
+        @keyframes scan-line {
+            0%   { top: 0; }
+            100% { top: 100%; }
+        }
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #00E5FF, transparent);
+            animation: scan-line 2s linear infinite;
+        }
+    </style>
 </head>
-<body class="bg-slate-900 flex items-center justify-center h-screen">
-    
-    <div class="text-center">
-        <h1 class="text-[#00E5FF] text-4xl font-black mb-10">BIO-SCOUT ALIVE</h1>
-        
-        <button id="test-btn" class="bg-[#00E5FF] w-24 h-24 rounded-full shadow-[0_0_50px_#00E5FF] flex items-center justify-center mx-auto border-4 border-white">
-            <svg width="40" height="40" fill="none" stroke="black" stroke-width="2" viewBox="0 0 24 24">
+<body class="bg-slate-900 text-white h-screen flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between px-4 py-3 border-b border-slate-700 flex-shrink-0">
+        <h1 class="text-[#00E5FF] font-black text-xl tracking-widest neon-text">BIO-SCOUT</h1>
+        <div class="flex items-center gap-2">
+            <span class="text-[#00E5FF] text-xs uppercase tracking-wider">XP</span>
+            <span id="xp-display" class="text-[#00E5FF] font-bold text-lg">0</span>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="flex-1 overflow-hidden relative">
+
+        <!-- SCANNER VIEW -->
+        <div id="view-scanner" class="absolute inset-0 flex flex-col">
+            <div class="relative flex-1 bg-black overflow-hidden">
+                <video id="camera-feed" autoplay playsinline class="w-full h-full"></video>
+                <canvas id="capture-canvas" class="hidden"></canvas>
+
+                <!-- Scanning overlay -->
+                <div id="scan-overlay" class="absolute inset-0 pointer-events-none">
+                    <div class="scan-line"></div>
+                    <div class="absolute top-8 left-8 w-12 h-12 border-t-2 border-l-2 border-[#00E5FF]"></div>
+                    <div class="absolute top-8 right-8 w-12 h-12 border-t-2 border-r-2 border-[#00E5FF]"></div>
+                    <div class="absolute bottom-8 left-8 w-12 h-12 border-b-2 border-l-2 border-[#00E5FF]"></div>
+                    <div class="absolute bottom-8 right-8 w-12 h-12 border-b-2 border-r-2 border-[#00E5FF]"></div>
+                </div>
+
+                <!-- Captured image preview -->
+                <div id="capture-preview" class="hidden absolute inset-0 bg-black">
+                    <img id="preview-img" class="w-full h-full object-cover" alt="Fanget billede" />
+                    <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black flex gap-3">
+                        <button id="save-btn" class="flex-1 bg-[#00E5FF] text-black font-bold py-3 rounded-full uppercase tracking-wider text-sm">Gem observation</button>
+                        <button id="retake-btn" class="flex-1 border border-[#00E5FF] text-[#00E5FF] font-bold py-3 rounded-full uppercase tracking-wider text-sm">Tag om</button>
+                    </div>
+                </div>
+
+                <!-- Camera unavailable -->
+                <div id="camera-placeholder" class="hidden absolute inset-0 flex flex-col items-center justify-center">
+                    <svg width="64" height="64" fill="none" stroke="#00E5FF" stroke-width="1.5" viewBox="0 0 24 24" class="mb-4 opacity-40">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    <p class="text-slate-400 text-sm text-center px-8">Kamera ikke tilgængeligt.<br>Tillad kameraadgang i browser-indstillinger.</p>
+                    <button id="retry-camera-btn" class="mt-4 border border-[#00E5FF] text-[#00E5FF] px-6 py-2 rounded-full text-sm uppercase tracking-wider">Prøv igen</button>
+                </div>
+            </div>
+
+            <!-- Capture button -->
+            <div id="capture-area" class="flex items-center justify-center py-6 bg-slate-900 flex-shrink-0">
+                <button id="capture-btn" class="bg-[#00E5FF] w-20 h-20 rounded-full pulse-neon flex items-center justify-center border-4 border-white">
+                    <svg width="36" height="36" fill="none" stroke="black" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- MISSIONER VIEW -->
+        <div id="view-missioner" class="absolute inset-0 overflow-y-auto hidden">
+            <div class="p-4">
+                <h2 class="text-[#00E5FF] font-bold text-lg uppercase tracking-widest mb-1">Missioner</h2>
+                <p class="text-slate-400 text-xs mb-4">Fuldfør missioner for at optjene XP</p>
+                <div id="mission-list" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- LOG VIEW -->
+        <div id="view-log" class="absolute inset-0 overflow-y-auto hidden">
+            <div class="p-4">
+                <h2 class="text-[#00E5FF] font-bold text-lg uppercase tracking-widest mb-1">Observationer</h2>
+                <p class="text-slate-400 text-xs mb-4">Dine registrerede fund</p>
+                <div id="obs-list" class="space-y-3"></div>
+                <div id="obs-empty" class="text-center py-16 text-slate-600">
+                    <p class="text-sm">Ingen observationer endnu.<br>Brug scanneren til at registrere din første!</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bottom navigation -->
+    <nav class="flex border-t border-slate-700 bg-slate-900 flex-shrink-0">
+        <button class="tab-btn flex-1 flex flex-col items-center py-3 text-slate-400 tab-active" data-view="scanner">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"></path>
                 <circle cx="12" cy="13" r="4"></circle>
             </svg>
+            <span class="text-xs mt-1 uppercase tracking-wider">Scanner</span>
         </button>
-        
-        <p class="text-white mt-8 opacity-50 uppercase tracking-widest text-xs">Tryk for at teste kamera</p>
-    </div>
+        <button class="tab-btn flex-1 flex flex-col items-center py-3 text-slate-400" data-view="missioner">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+            </svg>
+            <span class="text-xs mt-1 uppercase tracking-wider">Missioner</span>
+        </button>
+        <button class="tab-btn flex-1 flex flex-col items-center py-3 text-slate-400" data-view="log">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span class="text-xs mt-1 uppercase tracking-wider">Log</span>
+        </button>
+    </nav>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 bg-[#00E5FF] text-black font-bold px-6 py-3 rounded-full text-sm uppercase tracking-wider shadow-lg transition-all duration-300 opacity-0 pointer-events-none z-50"></div>
 
     <script>
-        document.getElementById('test-btn').onclick = () => {
-            alert("Kamera-systemet aktiveres nu!");
+        // ── MISSIONS DATA ──────────────────────────────────────────────────────
+        const MISSIONS = [
+            { id: 'm1', title: 'Fotografér et insekt',       xp: 50,  icon: '🐛' },
+            { id: 'm2', title: 'Find en svamp',               xp: 75,  icon: '🍄' },
+            { id: 'm3', title: 'Spot en fugl',                xp: 40,  icon: '🐦' },
+            { id: 'm4', title: 'Fotografér en blomst',        xp: 30,  icon: '🌸' },
+            { id: 'm5', title: 'Find en bille',               xp: 60,  icon: '🪲' },
+            { id: 'm6', title: 'Spot en sommerfugl',          xp: 80,  icon: '🦋' },
+            { id: 'm7', title: 'Find spor af et pattedyr',    xp: 90,  icon: '🐾' },
+            { id: 'm8', title: 'Fotografér et vandmiljø',     xp: 100, icon: '💧' },
+        ];
+
+        // ── STATE ──────────────────────────────────────────────────────────────
+        let state = { xp: 0, completedMissions: [], observations: [] };
+
+        const loadState = () => {
+            const saved = localStorage.getItem('bioscout_state');
+            if (saved) state = JSON.parse(saved);
         };
+
+        const saveState = () => localStorage.setItem('bioscout_state', JSON.stringify(state));
+
+        // ── CAMERA ────────────────────────────────────────────────────────────
+        let stream = null;
+        let capturedDataUrl = null;
+
+        const startCamera = async () => {
+            const video = document.getElementById('camera-feed');
+            const placeholder = document.getElementById('camera-placeholder');
+            const scanOverlay = document.getElementById('scan-overlay');
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+                video.srcObject = stream;
+                video.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                scanOverlay.classList.remove('hidden');
+            } catch {
+                video.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                scanOverlay.classList.add('hidden');
+            }
+        };
+
+        const stopCamera = () => {
+            if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+        };
+
+        const capturePhoto = () => {
+            const video = document.getElementById('camera-feed');
+            const canvas = document.getElementById('capture-canvas');
+            if (!stream) return;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            capturedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            document.getElementById('preview-img').src = capturedDataUrl;
+            document.getElementById('capture-preview').classList.remove('hidden');
+            document.getElementById('capture-area').classList.add('hidden');
+        };
+
+        const retake = () => {
+            document.getElementById('capture-preview').classList.add('hidden');
+            document.getElementById('capture-area').classList.remove('hidden');
+            capturedDataUrl = null;
+        };
+
+        const saveObservation = () => {
+            if (!capturedDataUrl) return;
+            const obs = { id: Date.now(), img: capturedDataUrl, ts: new Date().toISOString(), xp: 20 };
+            state.observations.unshift(obs);
+            state.xp += obs.xp;
+            saveState();
+            showToast(`+${obs.xp} XP — Observation gemt!`);
+            updateXpDisplay();
+            retake();
+            renderLog();
+        };
+
+        // ── MISSIONS ──────────────────────────────────────────────────────────
+        const renderMissions = () => {
+            document.getElementById('mission-list').innerHTML = MISSIONS.map(m => {
+                const done = state.completedMissions.includes(m.id);
+                return `
+                <div class="bg-slate-800 rounded-xl p-4 flex items-center gap-4${done ? ' opacity-50' : ''}">
+                    <span class="text-3xl">${m.icon}</span>
+                    <div class="flex-1">
+                        <p class="font-semibold text-sm${done ? ' line-through text-slate-400' : ''}">${m.title}</p>
+                        <p class="text-[#00E5FF] text-xs mt-1">${m.xp} XP</p>
+                    </div>
+                    <button onclick="completeMission('${m.id}',${m.xp})"
+                        ${done ? 'disabled' : ''}
+                        class="${done
+                            ? 'border border-slate-600 text-slate-600 px-3 py-1 rounded-full text-xs cursor-default'
+                            : 'border border-[#00E5FF] text-[#00E5FF] px-3 py-1 rounded-full text-xs'}">
+                        ${done ? 'Klaret' : 'Fuldfør'}
+                    </button>
+                </div>`;
+            }).join('');
+        };
+
+        const completeMission = (id, xp) => {
+            if (state.completedMissions.includes(id)) return;
+            state.completedMissions.push(id);
+            state.xp += xp;
+            saveState();
+            showToast(`+${xp} XP — Mission klaret!`);
+            updateXpDisplay();
+            renderMissions();
+        };
+
+        // ── LOG ───────────────────────────────────────────────────────────────
+        const renderLog = () => {
+            const list = document.getElementById('obs-list');
+            const empty = document.getElementById('obs-empty');
+            if (state.observations.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+            list.innerHTML = state.observations.map(obs => {
+                const label = new Date(obs.ts).toLocaleString('da-DK', { dateStyle: 'short', timeStyle: 'short' });
+                return `
+                <div class="bg-slate-800 rounded-xl overflow-hidden flex items-center">
+                    <img src="${obs.img}" class="w-20 h-20 object-cover flex-shrink-0" alt="Observation" />
+                    <div class="flex-1 px-4">
+                        <p class="text-xs text-slate-400">${label}</p>
+                        <p class="text-[#00E5FF] text-sm font-bold mt-1">+${obs.xp} XP</p>
+                    </div>
+                </div>`;
+            }).join('');
+        };
+
+        // ── UI HELPERS ────────────────────────────────────────────────────────
+        const updateXpDisplay = () => {
+            document.getElementById('xp-display').textContent = state.xp;
+        };
+
+        let toastTimer = null;
+        const showToast = (msg) => {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.opacity = '1';
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+        };
+
+        const switchView = (view) => {
+            ['scanner', 'missioner', 'log'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.toggle('hidden', v !== view);
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                const active = btn.dataset.view === view;
+                btn.classList.toggle('tab-active', active);
+                btn.classList.toggle('text-slate-400', !active);
+            });
+            if (view === 'scanner') startCamera(); else stopCamera();
+            if (view === 'missioner') renderMissions();
+            if (view === 'log') renderLog();
+        };
+
+        // ── INIT ──────────────────────────────────────────────────────────────
+        loadState();
+        updateXpDisplay();
+
+        document.getElementById('capture-btn').onclick = capturePhoto;
+        document.getElementById('save-btn').onclick = saveObservation;
+        document.getElementById('retake-btn').onclick = retake;
+        document.getElementById('retry-camera-btn').onclick = startCamera;
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.onclick = () => switchView(btn.dataset.view);
+        });
+
+        startCamera();
     </script>
 </body>
 </html>
